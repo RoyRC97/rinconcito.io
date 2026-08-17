@@ -1,1 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Rinconcito - Menú Digital</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .contenedor {
+      max-width: 480px;
+      width: 100%;
+      background-color: #282828;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    h1 {
+      text-align: center;
+      color: #f39c12;
+      margin-top: 0;
+    }
+    p.subtitulo {
+      text-align: center;
+      color: #a0a0a0;
+      margin-bottom: 20px;
+    }
+    .tarjeta-producto {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #333333;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .info-producto strong {
+      font-size: 1.05rem;
+    }
+    .info-producto span {
+      display: block;
+      color: #2ecc71;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .btn-agregar {
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .btn-agregar:hover {
+      background-color: #45a049;
+    }
+    .barra-resumen {
+      margin-top: 24px;
+      padding: 16px;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      border: 1px solid #444;
+    }
+    .fila-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2ecc71;
+      margin-bottom: 12px;
+    }
+    .botones-accion {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-ver-pedido {
+      flex: 2;
+      background-color: #f39c12;
+      color: #121212;
+      text-align: center;
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .btn-reiniciar {
+      flex: 1;
+      background-color: #e74c3c;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
 
+  <div class="contenedor">
+    <h1>🍽️ El Rinconcito</h1>
+    <p class="subtitulo">Selecciona tus bebidas y alimentos</p>
+
+    <div class="lista-productos">
+      {% for producto in productos %}
+      <div class="tarjeta-producto">
+        <div class="info-producto">
+          <strong>{{ producto['nombre'] }}</strong>
+          <span>${{ "%.2f"|format(producto['precio']) }} MXN</span>
+        </div>
+        <a href="{{ url_for('agregar', producto_id=producto['id']) }}" class="btn-agregar">+ Agregar</a>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: #888;">No hay productos registrados en bar.db.</p>
+      {% endfor %}
+    </div>
+
+    <div class="barra-resumen">
+      <div class="fila-total">
+        <span>Artículos: {{ items_en_carrito }}</span>
+        <span>Total: ${{ "%.2f"|format(total) }}</span>
+      </div>
+      <div class="botones-accion">
+        <a href="{{ url_for('pedido') }}" class="btn-ver-pedido">🧾 Ver Cuenta Detallada</a>
+        <a href="{{ url_for('reiniciar') }}" class="btn-reiniciar">🧹 Vaciar</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
