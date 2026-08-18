@@ -1,11 +1,47 @@
-from flask import Flask, render_template, request, redirect, url_for
+import os
 import sqlite3
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
+# 📌 Ruta absoluta a la base de datos dentro de la misma carpeta
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "bartres.db")
+
+def inicializar_bd():
+    """Crea la tabla e inserta productos por defecto si está vacía."""
+    conexion = sqlite3.connect(DB_PATH)
+    cursor = conexion.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS productos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            precio REAL NOT NULL
+        )
+    """)
+    conexion.commit()
+
+    # Verificar si existen productos
+    cursor.execute("SELECT COUNT(*) FROM productos")
+    if cursor.fetchone()[0] == 0:
+        productos_semilla = [
+            ("Cerveza Nacional", 45.0),
+            ("Cerveza Artesanal", 75.0),
+            ("Nachos con Queso", 65.0),
+            ("Alitas BBQ", 120.0),
+            ("Refresco 355ml", 30.0)
+        ]
+        cursor.executemany("INSERT INTO productos (nombre, precio) VALUES (?, ?)", productos_semilla)
+        conexion.commit()
+
+    conexion.close()
+
+# Ejecutar inicialización al arrancar
+inicializar_bd()
+
 # 📥 Obtener productos de la base
 def cargar_productos():
-    conexion = sqlite3.connect("bartres.db")
+    conexion = sqlite3.connect(DB_PATH)
     cursor = conexion.cursor()
     cursor.execute("SELECT id, nombre, precio FROM productos")
     productos = cursor.fetchall()
@@ -25,7 +61,7 @@ total = 0.0
 @app.route("/agregar/<int:producto_id>")
 def agregar(producto_id):
     global total
-    conexion = sqlite3.connect("bartres.db")
+    conexion = sqlite3.connect(DB_PATH)
     cursor = conexion.cursor()
     cursor.execute("SELECT nombre, precio FROM productos WHERE id=?", (producto_id,))
     producto = cursor.fetchone()
