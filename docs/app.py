@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # 📌 Ruta absoluta a la base de datos dentro de la misma carpeta
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "bartres.db")
+DB_PATH = os.path.join(BASE_DIR, "bar.db")
 
 def inicializar_bd():
     """Crea la tabla e inserta productos por defecto si está vacía."""
