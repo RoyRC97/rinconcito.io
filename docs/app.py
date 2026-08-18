@@ -53,16 +53,16 @@ def cargar_productos():
     return productos
 
 
+# ➕ Agregar producto al pedido
+pedido_actual = []
+total = 0.0
+
+
 # 🏠 Página principal: lista de productos
 @app.route("/")
 def index():
     productos = cargar_productos()
-    return render_template("index.html", productos=productos)
-
-
-# ➕ Agregar producto al pedido
-pedido_actual = []
-total = 0.0
+    return render_template("index.html", productos=productos, total=total)
 
 
 @app.route("/agregar/<int:producto_id>")
