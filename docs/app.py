@@ -8,6 +8,7 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "bar.db")
 
+
 def inicializar_bd():
     """Crea la tabla e inserta productos por defecto si está vacía."""
     conexion = sqlite3.connect(DB_PATH)
@@ -36,17 +37,21 @@ def inicializar_bd():
 
     conexion.close()
 
+
 # Ejecutar inicialización al arrancar
 inicializar_bd()
+
 
 # 📥 Obtener productos de la base
 def cargar_productos():
     conexion = sqlite3.connect(DB_PATH)
+    conexion.row_factory = sqlite3.Row  # 👈 permite acceder por nombre: producto['precio']
     cursor = conexion.cursor()
     cursor.execute("SELECT id, nombre, precio FROM productos")
     productos = cursor.fetchall()
     conexion.close()
     return productos
+
 
 # 🏠 Página principal: lista de productos
 @app.route("/")
@@ -54,30 +59,36 @@ def index():
     productos = cargar_productos()
     return render_template("index.html", productos=productos)
 
+
 # ➕ Agregar producto al pedido
 pedido_actual = []
 total = 0.0
+
 
 @app.route("/agregar/<int:producto_id>")
 def agregar(producto_id):
     global total
     conexion = sqlite3.connect(DB_PATH)
+    conexion.row_factory = sqlite3.Row  # 👈 mismo fix aquí
     cursor = conexion.cursor()
     cursor.execute("SELECT nombre, precio FROM productos WHERE id=?", (producto_id,))
     producto = cursor.fetchone()
     conexion.close()
 
     if producto:
-        nombre, precio = producto
-        pedido_actual.append((nombre, precio))
+        nombre = producto["nombre"]
+        precio = producto["precio"]
+        pedido_actual.append({"nombre": nombre, "precio": precio})  # 👈 dict, no tupla
         total += precio
 
     return redirect(url_for("index"))
+
 
 # 🧾 Ver pedido
 @app.route("/pedido")
 def pedido():
     return render_template("pedido.html", pedido=pedido_actual, total=total)
+
 
 # 🧹 Reiniciar pedido
 @app.route("/reiniciar")
@@ -86,6 +97,7 @@ def reiniciar():
     pedido_actual = []
     total = 0.0
     return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
