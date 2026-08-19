@@ -9,6 +9,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "bar.db")
 
 
+def get_conexion():
+    conexion = sqlite3.connect(DB_PATH)
+    conexion.row_factory = sqlite3.Row  # permite acceder por nombre: fila['precio']
+    return conexion
+
+
 def inicializar_bd():
     """Crea la tabla e inserta productos por defecto si está vacía."""
     conexion = sqlite3.connect(DB_PATH)
@@ -16,13 +22,12 @@ def inicializar_bd():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS productos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
+            nombre TEXT NOT NULL UNIQUE,
             precio REAL NOT NULL
         )
     """)
     conexion.commit()
 
-    # Verificar si existen productos
     cursor.execute("SELECT COUNT(*) FROM productos")
     if cursor.fetchone()[0] == 0:
         productos_semilla = [
@@ -44,8 +49,7 @@ inicializar_bd()
 
 # 📥 Obtener productos de la base
 def cargar_productos():
-    conexion = sqlite3.connect(DB_PATH)
-    conexion.row_factory = sqlite3.Row  # 👈 permite acceder por nombre: producto['precio']
+    conexion = get_conexion()
     cursor = conexion.cursor()
     cursor.execute("SELECT id, nombre, precio FROM productos")
     productos = cursor.fetchall()
@@ -53,14 +57,23 @@ def cargar_productos():
     return productos
 
 
-# ➕ Agregar producto al pedido
+# ---------------------------------------------------------
+# 🏠 PANTALLA DE INICIO: elegir rol
+# ---------------------------------------------------------
+@app.route("/")
+def inicio():
+    return render_template("inicio.html")
+
+
+# ---------------------------------------------------------
+# 🧑‍🍳 MESERO: tomar pedidos
+# ---------------------------------------------------------
 pedido_actual = []
 total = 0.0
 
 
-# 🏠 Página principal: lista de productos
-@app.route("/")
-def index():
+@app.route("/pedidos")
+def pedidos():
     productos = cargar_productos()
     return render_template("index.html", productos=productos, total=total)
 
@@ -68,35 +81,78 @@ def index():
 @app.route("/agregar/<int:producto_id>")
 def agregar(producto_id):
     global total
-    conexion = sqlite3.connect(DB_PATH)
-    conexion.row_factory = sqlite3.Row  # 👈 mismo fix aquí
+    conexion = get_conexion()
     cursor = conexion.cursor()
     cursor.execute("SELECT nombre, precio FROM productos WHERE id=?", (producto_id,))
     producto = cursor.fetchone()
     conexion.close()
 
     if producto:
-        nombre = producto["nombre"]
-        precio = producto["precio"]
-        pedido_actual.append({"nombre": nombre, "precio": precio})  # 👈 dict, no tupla
-        total += precio
+        pedido_actual.append({"nombre": producto["nombre"], "precio": producto["precio"]})
+        total += producto["precio"]
 
-    return redirect(url_for("index"))
+    return redirect(url_for("pedidos"))
 
 
-# 🧾 Ver pedido
 @app.route("/pedido")
 def pedido():
     return render_template("pedido.html", pedido=pedido_actual, total=total)
 
 
-# 🧹 Reiniciar pedido
 @app.route("/reiniciar")
 def reiniciar():
     global pedido_actual, total
     pedido_actual = []
     total = 0.0
-    return redirect(url_for("index"))
+    return redirect(url_for("pedidos"))
+
+
+# ---------------------------------------------------------
+# 👔 GERENTE: registrar / editar / eliminar productos
+# ---------------------------------------------------------
+@app.route("/productos", methods=["GET", "POST"])
+def productos():
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "").strip()
+        precio = request.form.get("precio", "").strip()
+
+        error = None
+        if nombre and precio:
+            try:
+                precio_float = float(precio)
+                conexion = get_conexion()
+                cursor = conexion.cursor()
+                cursor.execute(
+                    "INSERT INTO productos (nombre, precio) VALUES (?, ?)",
+                    (nombre, precio_float)
+                )
+                conexion.commit()
+                conexion.close()
+            except ValueError:
+                error = "El precio debe ser un número válido."
+            except sqlite3.IntegrityError:
+                error = f'Ya existe un producto llamado "{nombre}".'
+        else:
+            error = "Nombre y precio son obligatorios."
+
+        if error:
+            lista_productos = cargar_productos()
+            return render_template("productos.html", productos=lista_productos, error=error)
+
+        return redirect(url_for("productos"))
+
+    lista_productos = cargar_productos()
+    return render_template("productos.html", productos=lista_productos)
+
+
+@app.route("/productos/eliminar/<int:producto_id>")
+def eliminar_producto(producto_id):
+    conexion = get_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM productos WHERE id=?", (producto_id,))
+    conexion.commit()
+    conexion.close()
+    return redirect(url_for("productos"))
 
 
 if __name__ == "__main__":
