@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rinconcito - Inicio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1e1e2f;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 40px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .opciones {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .boton {
+            text-decoration: none;
+            background: #2e2e42;
+            border: 2px solid #4a4a6a;
+            border-radius: 16px;
+            padding: 32px 40px;
+            color: #fff;
+            font-size: 1.2rem;
+            text-align: center;
+            width: 200px;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .boton:hover {
+            background: #3d3d5c;
+            transform: translateY(-4px);
+        }
+        .boton span {
+            display: block;
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>¿Qué harás hoy?</h1>
+    <div class="opciones">
+        <a class="boton" href="{{ url_for('pedidos') }}">
+            <span>🧑‍🍳</span>
+            Pedidos<br>(Mesero)
+        </a>
+        <a class="boton" href="{{ url_for('productos') }}">
+            <span>📦</span>
+            Agregar productos<br>(Gerente)
+        </a>
+    </div>
+</body>
+</html>
